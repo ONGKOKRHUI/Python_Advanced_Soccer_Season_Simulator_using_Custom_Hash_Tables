@@ -1,0 +1,195 @@
+import unittest
+from unittest import mock
+import datetime
+import time
+
+from enums import PlayerPosition
+from player import Player
+from data_structures import LinearProbeTable
+
+
+class TestPlayerComplexity(unittest.TestCase):
+    def setUp(self):
+        self.sample_players_data = [
+            ("Alexey", PlayerPosition.STRIKER, 21),
+            ("Maria", PlayerPosition.MIDFIELDER, 21),
+            ("Brendon", PlayerPosition.DEFENDER, 21),
+            ("Saksham", PlayerPosition.GOALKEEPER, 23),
+        ]
+        self.sample_players = [
+            Player(name, position, age) for name, position, age in self.sample_players_data
+        ]
+        self.sample_stats = [
+            "WEIGHT", "HEIGHT", "ASSISTS", "TACKLES", 
+            "INTERCEPTIONS", "SAVES", "PASSES", "YELLOW_CARDS",
+            "RED_CARDS", "FOULS", "SHOTS_ON_TARGET", "HEADERS"
+        ]
+
+    def test_init_attributes(self):
+        """Test that all attributes are correctly initialized."""
+        player = self.sample_players[0]
+        current_year = datetime.datetime.now().year
+        
+        self.assertEqual(player.name, "Alexey")
+        self.assertEqual(player.position, PlayerPosition.STRIKER)
+        self.assertEqual(player.goals, 0)
+        self.assertEqual(player.born_year, current_year - 21)
+        # Check that stats is an instance of LinearProbeTable
+        self.assertIsInstance(player.stats, LinearProbeTable)
+        # Check that stats is initially empty (keys method should return empty list)
+        self.assertEqual(len([k for k in player.stats.keys() if k is not None]), 0)
+
+    def test_age_calculation_different_years(self):
+        """Test age calculation across multiple years."""
+        player = Player("Test", PlayerPosition.STRIKER, 25)
+        
+        # Mock the datetime to simulate different years
+        with mock.patch('player.datetime') as mock_datetime:
+            # Current year
+            current_year = datetime.datetime.now().year
+            mock_datetime.datetime.now.return_value = datetime.datetime(current_year, 1, 1)
+            self.assertEqual(player.get_age(), 25)
+            
+            # Next year
+            mock_datetime.datetime.now.return_value = datetime.datetime(current_year + 1, 1, 1)
+            self.assertEqual(player.get_age(), 26)
+            
+            # Five years later
+            mock_datetime.datetime.now.return_value = datetime.datetime(current_year + 5, 1, 1)
+            self.assertEqual(player.get_age(), 30)
+
+    def test_setitem_and_getitem(self):
+        """Test setting and getting stats."""
+        player = self.sample_players[0]
+        
+        # Set each stat
+        for i, stat in enumerate(self.sample_stats):
+            player[stat] = i * 10
+        
+        # Check each stat was properly set
+        for i, stat in enumerate(self.sample_stats):
+            self.assertEqual(player[stat], i * 10)
+        
+        # Update existing stats
+        for i, stat in enumerate(self.sample_stats):
+            player[stat] = i * 20
+        
+        # Check updates were applied
+        for i, stat in enumerate(self.sample_stats):
+            self.assertEqual(player[stat], i * 20)
+
+    def test_getitem_nonexistent_stat(self):
+        """Test getting a stat that doesn't exist raises KeyError."""
+        player = self.sample_players[0]
+        with self.assertRaises(KeyError):
+            value = player["NONEXISTENT_STAT"]
+
+    def test_reset_stats_empty(self):
+        """Test resetting stats when none exist."""
+        player = Player("Empty", PlayerPosition.STRIKER, 20)
+        # Should not raise any errors
+        player.reset_stats()
+        # Try to get a stat should still raise KeyError
+        with self.assertRaises(KeyError):
+            value = player["NONEXISTENT_STAT"]
+
+    def test_reset_stats_with_data(self):
+        """Test resetting stats with existing data."""
+        player = self.sample_players[0]
+        
+        # Set stats
+        for i, stat in enumerate(self.sample_stats):
+            player[stat] = i * 10
+        
+        # Reset stats
+        player.reset_stats()
+        
+        # Check all stats are zero
+        for stat in self.sample_stats:
+            self.assertEqual(player[stat], 0)
+        
+        # Check that goals attribute is not affected
+        player.goals = 5
+        player.reset_stats()
+        self.assertEqual(player.goals, 5)
+
+    def test_stats_independence(self):
+        """Test that stats are independent between players."""
+        player1 = self.sample_players[0]
+        player2 = self.sample_players[1]
+        
+        # Set stats for player1
+        for i, stat in enumerate(self.sample_stats):
+            player1[stat] = i * 10
+        
+        # Check player2 doesn't have these stats
+        for stat in self.sample_stats:
+            with self.assertRaises(KeyError):
+                value = player2[stat]
+        
+        # Set some stats for player2
+        player2["ASSISTS"] = 100
+        player2["TACKLES"] = 50
+        
+        # Check values are correct for both players
+        self.assertEqual(player1["ASSISTS"], 20)  # Index 2 in sample_stats * 10
+        self.assertEqual(player2["ASSISTS"], 100)
+        self.assertEqual(player1["TACKLES"], 30)  # Index 3 in sample_stats * 10
+        self.assertEqual(player2["TACKLES"], 50)
+        
+        # Reset player1 stats and check player2 is unaffected
+        player1.reset_stats()
+        self.assertEqual(player1["ASSISTS"], 0)
+        self.assertEqual(player2["ASSISTS"], 100)
+
+    def test_collision_handling(self):
+        """Test handling of hash collisions in stats table."""
+        player = self.sample_players[0]
+        
+        # First, let's create a separate test where we manually control the stats table
+        # Create a custom stats table with a deliberately small size to force collisions
+        custom_player = Player("Custom", PlayerPosition.STRIKER, 25)
+        
+        # We'll set multiple stats which should create some natural collisions
+        # due to the limited size of the internal hash table
+        for i, stat in enumerate(self.sample_stats[:8]):
+            custom_player[stat] = i * 10
+            
+        # Check all stats were properly stored despite potential collisions
+        for i, stat in enumerate(self.sample_stats[:8]):
+            self.assertEqual(custom_player[stat], i * 10)
+        
+        # Test that a stat can be updated in presence of potential collisions
+        custom_player["TACKLES"] = 999
+        self.assertEqual(custom_player["TACKLES"], 999)
+
+    def test_large_number_of_stats(self):
+        """Test behavior with a large number of statistics."""
+        player = self.sample_players[0]
+        
+        # Add a large number of stats
+        num_stats = 100
+        for i in range(num_stats):
+            stat_name = f"STAT_{i}"
+            player[stat_name] = i
+        
+        # Check all stats are retrievable
+        for i in range(num_stats):
+            stat_name = f"STAT_{i}"
+            self.assertEqual(player[stat_name], i)
+        
+        # Reset and check all are zero
+        player.reset_stats()
+        for i in range(num_stats):
+            stat_name = f"STAT_{i}"
+            self.assertEqual(player[stat_name], 0)
+
+    def test_str_and_repr(self):
+        """Test string representation methods."""
+        player = self.sample_players[0]
+        self.assertEqual(str(player), "Alexey")
+        self.assertEqual(repr(player), "Alexey")
+
+
+if __name__ == '__main__':
+    unittest.main()
