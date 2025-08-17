@@ -1,3 +1,12 @@
+"""
+This module defines the `Team` class, a complex data structure that manages
+all information related to a single soccer team.
+
+It uses a `LinearProbeTable` to store its roster, keyed by player position for
+efficient retrieval. It also tracks game history using a `CircularQueue` and manages
+date-stamped blog posts with a specialized `HashyDateTable`.
+"""
+
 from __future__ import annotations
 
 from data_structures.referential_array import ArrayR
