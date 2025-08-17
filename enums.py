@@ -1,3 +1,10 @@
+"""
+This module defines various enumerations used across the simulation project.
+
+It provides constant, readable values for concepts like `TeamGameResult`
+(WIN, DRAW, LOSS) and `PlayerPosition` (GOALKEEPER, DEFENDER, etc.),
+ensuring consistency and preventing errors from using raw strings or integers.
+"""
 
 from enum import Enum, IntEnum
 
