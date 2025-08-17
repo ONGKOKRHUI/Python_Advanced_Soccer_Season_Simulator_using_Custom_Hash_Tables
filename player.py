@@ -1,3 +1,12 @@
+"""
+This module defines the `Player` class for the soccer simulation.
+
+Each `Player` instance stores core information such as name, age, and position.
+A key feature is its use of a `LinearProbeTable` to manage a dynamic set of
+individual statistics (e.g., goals, tackles, assists), allowing for flexible
+and efficient stat tracking.
+"""
+
 from __future__ import annotations
 from enums import PlayerPosition
 from data_structures import *
