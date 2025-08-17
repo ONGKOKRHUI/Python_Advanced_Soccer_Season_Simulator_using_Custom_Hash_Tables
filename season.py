@@ -1,3 +1,13 @@
+"""
+This module contains the `Season` class, the main orchestrator for the entire
+soccer league simulation.
+
+The class is responsible for generating a full round-robin schedule for all
+teams, simulating the season on a week-by-week basis, updating team statistics,
+and maintaining a dynamically sorted leaderboard using a Mergesort algorithm.
+It integrates all other components like `Team`, `Player`, and `GameSimulator`.
+"""
+
 from __future__ import annotations
 from data_structures.array_set import ArraySet
 from data_structures.referential_array import ArrayR
