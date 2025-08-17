@@ -1,3 +1,12 @@
+"""
+This module provides the `GameSimulator` class, which is responsible for
+simulating the outcome of a single game between two teams.
+
+It uses a static method that takes two teams as input and employs a
+probabilistic model to generate a realistic outcome, including the number
+of goals scored by each team and a list of the players who scored.
+"""
+
 from __future__ import annotations
 from data_structures.referential_array import ArrayR
 from data_structures.array_list import ArrayList
