@@ -1,3 +1,13 @@
+"""
+This module implements the `HashyDateTable`, a specialized hash table
+designed to work with date strings as keys.
+
+It inherits from `LinearProbeTable` and features a custom hash function
+that intelligently parses date strings in various formats (e.g., YYYY/MM/DD,
+DD-MM-YYYY). This tailored function ensures a uniform distribution of date
+keys across the table, minimizing collisions and maintaining performance.
+"""
+
 from __future__ import annotations
 
 from data_structures.hash_table_linear_probing import LinearProbeTable
